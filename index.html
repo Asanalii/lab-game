@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lab Detective</title>
+<meta name="description" content="Interactive team game for learning lab equipment vocabulary: study, colour sort and yes/no detective.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧪</text></svg>">
+<style>body{margin:0}[hidden]{display:none!important}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+:root{
+  --paper:#EAF0F3; --grid:#D8E3E8; --surface:#FFFFFF; --ink:#15263A; --muted:#566879; --line:#C6D3DB;
+  --accent:#0B7A70; --accent-ink:#FFFFFF; --flame:#D2780E; --good:#1C8347; --bad:#BE3A31;
+  --liquid:#5CC6B8;
+  --c-transfer:#0E8C80; --c-measure:#2F6FD0; --c-contain:#7B4FC9; --c-clean:#3E9A2F;
+  --c-heat:#D66A12; --c-grip:#C4417E; --c-grind:#8A6A2C;
+  --team-a:#2F6FD0; --team-b:#D2552F;
+  --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#0D151C; --grid:#15212A; --surface:#15212D; --ink:#E3ECF1; --muted:#97A9B8; --line:#2B3C4B;
+    --accent:#3EC0B1; --accent-ink:#06201D; --flame:#F2A548; --good:#58C78B; --bad:#F06D62;
+    --liquid:#2B9A8D;
+    --c-transfer:#35BFB1; --c-measure:#6B9DF0; --c-contain:#A988EB; --c-clean:#6CC45C;
+    --c-heat:#F29A4A; --c-grip:#EE78AE; --c-grind:#C9A566;
+    --team-a:#6B9DF0; --team-b:#F28462;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#0D151C; --grid:#15212A; --surface:#15212D; --ink:#E3ECF1; --muted:#97A9B8; --line:#2B3C4B;
+  --accent:#3EC0B1; --accent-ink:#06201D; --flame:#F2A548; --good:#58C78B; --bad:#F06D62;
+  --liquid:#2B9A8D;
+  --c-transfer:#35BFB1; --c-measure:#6B9DF0; --c-contain:#A988EB; --c-clean:#6CC45C;
+  --c-heat:#F29A4A; --c-grip:#EE78AE; --c-grind:#C9A566;
+  --team-a:#6B9DF0; --team-b:#F28462;
+}
+*{box-sizing:border-box}
+body{
+  background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:26px 26px;
+  color:var(--ink); font-family:var(--body); font-size:17px; line-height:1.45;
+  padding-inline:16px; padding-block:0 48px;
+}
+.app{max-width:1100px; margin:0 auto}
+h1,h2,h3{font-family:var(--display); margin:0; text-wrap:balance; letter-spacing:-0.01em}
+button,input{font:inherit; color:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--flame); outline-offset:2px}
+.label{font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted)}
+.btn{border:1.5px solid var(--line); background:var(--surface); padding:9px 18px; border-radius:9px; font-weight:700}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+.btn.big{font-size:20px; padding:14px 28px}
+.muted{color:var(--muted)}
+
+/* header */
+.top{display:flex; flex-wrap:wrap; gap:16px 24px; align-items:end; justify-content:space-between; padding-block:32px 18px}
+.brand h1{font-size:clamp(36px,7vw,58px); font-weight:800; line-height:.95}
+.brand h1 span{color:var(--accent)}
+.brand p{margin:6px 0 0; color:var(--muted)}
+.seg{display:inline-flex; border:1.5px solid var(--line); border-radius:10px; background:var(--surface); padding:3px; gap:3px; flex-wrap:wrap}
+.seg button{border:0; background:transparent; padding:7px 14px; border-radius:7px; font-weight:700; color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--ink); color:var(--surface)}
+.deck-pick{display:flex; flex-direction:column; gap:6px}
+
+/* teams */
+.teams{display:grid; grid-template-columns:1fr 1fr auto; gap:10px; margin-bottom:16px}
+.team{display:flex; align-items:center; gap:12px; background:var(--surface); border:2px solid var(--line); border-radius:12px; padding:10px 14px; transition:border-color .2s, box-shadow .2s}
+.team .swatch{width:14px; height:14px; border-radius:50%; flex:none}
+.team input{border:0; background:transparent; font-weight:700; font-size:18px; min-width:0; width:100%; padding:2px 0}
+.team .pts{font-family:var(--display); font-weight:800; font-size:34px; font-variant-numeric:tabular-nums; line-height:1}
+.team .turn{font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; padding:3px 8px; border-radius:999px; background:var(--grid); color:var(--muted); white-space:nowrap; visibility:hidden}
+.team.active .turn{visibility:visible; background:var(--flame); color:#fff}
+.team.a .swatch{background:var(--team-a)} .team.b .swatch{background:var(--team-b)}
+.team.a.active{border-color:var(--team-a); box-shadow:0 0 0 4px color-mix(in srgb,var(--team-a) 18%,transparent)}
+.team.b.active{border-color:var(--team-b); box-shadow:0 0 0 4px color-mix(in srgb,var(--team-b) 18%,transparent)}
+@media (max-width:640px){.teams{grid-template-columns:1fr 1fr}.teams .reset{grid-column:1/-1}}
+
+/* tabs */
+.tabs{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:0}
+.tabs button{border:1.5px solid var(--line); border-bottom:0; background:var(--grid); padding:10px 18px; border-radius:10px 10px 0 0; font-weight:700; color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--surface); color:var(--ink)}
+.panel{background:var(--surface); border:1.5px solid var(--line); border-radius:0 12px 12px 12px; padding:24px}
+@media (max-width:560px){.panel{padding:16px}}
+.panel-head{display:flex; flex-wrap:wrap; gap:8px 20px; align-items:baseline; justify-content:space-between; margin-bottom:18px}
+.panel-head h2{font-size:clamp(24px,4vw,32px); font-weight:800}
+.panel-head p{margin:4px 0 0; max-width:62ch; color:var(--muted)}
+
+/* drawings */
+.fig .o{fill:none; stroke:var(--ink); stroke-width:3; stroke-linecap:round; stroke-linejoin:round}
+.fig .m{fill:none; stroke:var(--ink); stroke-width:1.6; stroke-linecap:round}
+.fig .l{fill:var(--liquid)}
+.fig .s{fill:var(--ink)}
+.fig .f{fill:var(--flame)}
+.fig .p{fill:var(--grid)}
+
+/* category chips */
+.cat{--c:var(--muted)}
+.cat-transfer{--c:var(--c-transfer)} .cat-measure{--c:var(--c-measure)} .cat-contain{--c:var(--c-contain)}
+.cat-clean{--c:var(--c-clean)} .cat-heat{--c:var(--c-heat)} .cat-grip{--c:var(--c-grip)} .cat-grind{--c:var(--c-grind)}
+.chip{display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; padding:3px 9px; border-radius:999px; background:color-mix(in srgb,var(--c) 16%,var(--surface)); color:var(--ink); border:1px solid color-mix(in srgb,var(--c) 55%,transparent)}
+.chip::before{content:""; width:8px; height:8px; border-radius:50%; background:var(--c)}
+
+/* study */
+.study-groups{display:grid; gap:18px}
+.study-group{border:2px solid var(--c); border-radius:14px; padding:14px; background:color-mix(in srgb,var(--c) 8%,var(--surface))}
+.study-group-head{display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 14px; margin-bottom:12px}
+.study-group-head h3{font-size:24px; font-weight:800; display:flex; align-items:center; gap:10px}
+.study-group-head h3::before{content:""; width:14px; height:14px; border-radius:50%; background:var(--c)}
+.study-group-head span{color:var(--muted); font-size:15px}
+.study-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px}
+.card{display:grid; grid-template-columns:72px 1fr; gap:12px; align-items:start; border:1.5px solid var(--line); border-radius:10px; padding:12px; background:var(--surface)}
+.card .fig{background:var(--paper); border-radius:8px; aspect-ratio:3/4; width:72px; max-width:100%; padding:4px}
+.card h3{font-size:19px; font-weight:800; margin-bottom:4px}
+.card p{margin:6px 0 0; font-size:15px}
+.card .hidden-name{border:0; background:var(--grid); border-radius:6px; padding:2px 10px; font-family:var(--mono); font-size:15px; color:var(--muted)}
+
+/* sort */
+.sort-stage{display:grid; gap:18px}
+.timer{height:10px; background:var(--grid); border-radius:5px; overflow:hidden}
+.timer i{display:block; height:100%; background:var(--accent); transition:width 1s linear}
+.timer.low i{background:var(--bad)}
+.sort-meta{display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; font-family:var(--mono); font-variant-numeric:tabular-nums}
+.sort-card{display:grid; grid-template-columns:110px 1fr; gap:20px; align-items:center; border:2px solid var(--line); border-radius:14px; padding:18px 22px; background:var(--paper); min-height:170px}
+.sort-card .fig{width:110px; aspect-ratio:3/4; max-width:100%}
+.sort-card h3{font-size:clamp(30px,5vw,46px); font-weight:800; line-height:1}
+.sort-card p{margin:10px 0 0; font-size:19px; max-width:52ch}
+.sort-card.ok{border-color:var(--good); background:color-mix(in srgb,var(--good) 12%,var(--paper))}
+.sort-card.no{border-color:var(--bad); background:color-mix(in srgb,var(--bad) 12%,var(--paper)); animation:shake .35s}
+@media (max-width:520px){.sort-card{grid-template-columns:70px 1fr; padding:14px; gap:12px}.sort-card .fig{width:70px}.sort-card p{font-size:16px}}
+.bins{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px}
+.bin{border:2px solid var(--c); background:color-mix(in srgb,var(--c) 14%,var(--surface)); border-radius:12px; padding:14px 12px; text-align:left; display:flex; flex-direction:column; gap:4px; min-height:86px}
+.bin:hover:not(:disabled){background:color-mix(in srgb,var(--c) 26%,var(--surface))}
+.bin b{font-family:var(--display); font-size:20px; font-weight:800}
+.bin small{color:var(--muted); font-size:13px}
+.bin .key{font-family:var(--mono); font-size:11px; color:var(--muted)}
+.bin.hint{box-shadow:0 0 0 4px var(--c)}
+.center-box{display:grid; justify-items:center; text-align:center; gap:14px; padding:28px 12px}
+.center-box .big-num{font-family:var(--display); font-size:64px; font-weight:800; line-height:1}
+.missed{display:flex; flex-wrap:wrap; gap:8px; justify-content:center}
+
+/* detective */
+.det{display:grid; grid-template-columns:minmax(260px,340px) 1fr; gap:22px; align-items:start}
+@media (max-width:760px){.det{grid-template-columns:1fr}}
+.mystery{border:2px dashed var(--line); border-radius:14px; padding:18px; background:var(--paper); display:grid; gap:12px}
+.mystery .qmark{display:grid; place-items:center; height:170px; font-family:var(--display); font-weight:800; font-size:120px; color:var(--accent); line-height:1}
+.mystery .fig{height:170px; display:grid; place-items:center}
+.mystery .fig svg{height:100%}
+.mystery.solved{border-style:solid; border-color:var(--good)}
+.mystery.gaveup{border-style:solid; border-color:var(--bad)}
+.pot{display:flex; align-items:baseline; justify-content:space-between; gap:10px}
+.pot b{font-family:var(--display); font-size:40px; font-weight:800; font-variant-numeric:tabular-nums; line-height:1}
+.pot-bar{display:flex; gap:4px}
+.pot-bar span{flex:1; height:8px; border-radius:3px; background:var(--flame)}
+.pot-bar span.gone{background:var(--grid)}
+.log{list-style:none; margin:0; padding:0; display:grid; gap:6px; max-height:260px; overflow:auto}
+.log li{display:flex; justify-content:space-between; gap:10px; font-size:15px; padding:6px 10px; background:var(--surface); border-radius:6px}
+.ans{font-family:var(--mono); font-weight:700; font-size:13px; padding:1px 8px; border-radius:4px; color:#fff; flex:none; align-self:start}
+.ans.yes{background:var(--good)} .ans.no{background:var(--bad)}
+.questions{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:8px}
+.qbtn{border:1.5px solid var(--line); background:var(--surface); padding:10px 12px; border-radius:9px; text-align:left; font-weight:700; display:flex; justify-content:space-between; gap:8px; align-items:center}
+.qbtn:hover:not(:disabled){border-color:var(--accent)}
+.qbtn:disabled{cursor:default; opacity:.9}
+.qbtn.asked-yes{border-color:var(--good); background:color-mix(in srgb,var(--good) 10%,var(--surface))}
+.qbtn.asked-no{border-color:var(--bad); background:color-mix(in srgb,var(--bad) 8%,var(--surface))}
+.section-title{display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin:22px 0 10px}
+.section-title h3{font-size:21px; font-weight:800}
+.guesses{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px}
+.gbtn{border:1.5px solid var(--line); background:var(--surface); border-radius:9px; padding:8px 10px; display:flex; gap:8px; align-items:center; text-align:left; font-weight:700; font-size:15px}
+.gbtn .fig{width:28px; height:36px; flex:none}
+.gbtn:hover:not(:disabled){border-color:var(--ink)}
+.gbtn.wrong{border-color:var(--bad); color:var(--bad); text-decoration:line-through; opacity:.7}
+.gbtn.right{border-color:var(--good); background:color-mix(in srgb,var(--good) 14%,var(--surface))}
+.gbtn:disabled{cursor:default}
+.gbtn.faded{opacity:.3}
+.toggle{display:inline-flex; gap:8px; align-items:center; font-size:15px; color:var(--muted); cursor:pointer}
+.result-line{font-weight:700; font-size:18px}
+.result-line.ok{color:var(--good)} .result-line.no{color:var(--bad)}
+
+@keyframes shake{25%{transform:translateX(-6px)}50%{transform:translateX(6px)}75%{transform:translateX(-3px)}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important; transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <span class="label">English for Science · Lab equipment</span>
+      <h1>Lab <span>Detective</span></h1>
+      <p>Learn the lab words, sort them by colour, then find the mystery item with yes/no questions.</p>
+    </div>
+    <div class="deck-pick">
+      <span class="label">Word set</span>
+      <div class="seg" id="deckPicker" role="group" aria-label="Word set">
+        <button type="button" data-deck="unit2" aria-pressed="true">Unit 2 · Glassware</button>
+        <button type="button" data-deck="unit3" aria-pressed="false">Unit 3 · Tools</button>
+        <button type="button" data-deck="both" aria-pressed="false">Both</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="teams" aria-label="Teams">
+    <div class="team a" id="team0">
+      <span class="swatch"></span>
+      <input id="teamName0" value="Team A" aria-label="Team A name">
+      <span class="turn">Your turn</span>
+      <span class="pts" id="teamScore0">0</span>
+    </div>
+    <div class="team b" id="team1">
+      <span class="swatch"></span>
+      <input id="teamName1" value="Team B" aria-label="Team B name">
+      <span class="turn">Your turn</span>
+      <span class="pts" id="teamScore1">0</span>
+    </div>
+    <button class="btn reset" id="resetScores" type="button">Reset scores</button>
+  </section>
+
+  <nav class="tabs" role="tablist" aria-label="Game modes">
+    <button type="button" role="tab" id="tab-study" aria-selected="false" data-tab="study">1 · Study</button>
+    <button type="button" role="tab" id="tab-sort" aria-selected="false" data-tab="sort">2 · Colour Sort</button>
+    <button type="button" role="tab" id="tab-detective" aria-selected="true" data-tab="detective">3 · Yes/No Detective</button>
+  </nav>
+
+  <main class="panel">
+    <div id="panel-study" hidden></div>
+    <div id="panel-sort" hidden></div>
+    <div id="panel-detective"></div>
+  </main>
+</div>
+
+<script>
+// ---------- categories (colours for Colour Sort) ----------
+const CATEGORIES = {
+  contain:  { title: "Contain & mix", note: "hold, mix or stir liquids" },
+  measure:  { title: "Measure",       note: "measure an exact volume" },
+  transfer: { title: "Transfer",      note: "move a substance from one place to another" },
+  clean:    { title: "Clean",         note: "clean the equipment" },
+  heat:     { title: "Heat",          note: "make heat" },
+  grip:     { title: "Grip",          note: "hold or pick up objects" },
+  grind:    { title: "Crush & grind", note: "make solids into powder" }
+};
+
+// ---------- yes/no questions for the detective game ----------
+const QUESTIONS = [
+  { key: "glass",    text: "Is it made of glass?" },
+  { key: "measure",  text: "Does it measure an exact volume?" },
+  { key: "transfer", text: "Does it move a substance from one place to another?" },
+  { key: "store",    text: "Can it hold liquid inside it?" },
+  { key: "thin",     text: "Is it shaped like a long, thin tube?" },
+  { key: "scale",    text: "Does it have measurement marks?" },
+  { key: "neck",     text: "Does it have a narrow neck?" },
+  { key: "cone",     text: "Is part of it cone-shaped?" },
+  { key: "stand",    text: "Can it stand on the table by itself?" },
+  { key: "bulb",     text: "Does it have a rubber bulb?" },
+  { key: "tap",      text: "Does it have a tap (stopcock)?" },
+  { key: "soft",     text: "Is it soft enough to squeeze or bend?" },
+  { key: "clean",    text: "Is it used for cleaning?" },
+  { key: "heat",     text: "Does it make heat?" },
+  { key: "flame",    text: "Does it make a flame?" },
+  { key: "electric", text: "Does it use electricity?" },
+  { key: "grip",     text: "Is it used to hold or pick up things?" },
+  { key: "hot",      text: "Is it used to pick up hot objects?" },
+  { key: "attach",   text: "Is it fixed to a stand?" },
+  { key: "stir",     text: "Is it used to mix or stir?" },
+  { key: "grind",    text: "Is it used to crush or grind?" },
+  { key: "powder",   text: "Is it used with powders?" }
+];
+
+// ---------- equipment: unit, colour group, description, YES answers, drawing ----------
+const EQUIPMENT = [
+  { name: "test tube", unit: 2, category: "contain", yes: ["glass","store","thin"],
+    description: "A small glass tube, closed and round at one end. It cannot stand alone, so keep it in a rack.",
+    drawing: '<path class="l" d="M50 88V122a10 10 0 0 0 20 0V88Z"/><path class="o" d="M50 18V122a10 10 0 0 0 20 0V18"/><path class="o" d="M45 18H75"/>' },
+  { name: "buret", unit: 2, category: "measure", yes: ["glass","measure","transfer","store","thin","scale","tap"],
+    description: "A long glass tube with a scale and a tap at the bottom. It adds an exact amount of liquid.",
+    drawing: '<rect class="l" x="54" y="38" width="12" height="74"/><path class="o" d="M54 8V112M66 8V112"/><path class="m" d="M54 30h6M54 50h6M54 70h6M54 90h6"/><rect class="o" x="42" y="112" width="36" height="9" rx="3"/><path class="o" d="M56 121L60 148L64 121"/>' },
+  { name: "dropper", unit: 2, category: "transfer", yes: ["glass","transfer","thin","bulb","soft"],
+    description: "A small tube with a rubber bulb. It adds liquid one drop at a time.",
+    drawing: '<path class="l" d="M54 98V126L60 146L66 126V98Z"/><ellipse class="s" cx="60" cy="34" rx="14" ry="22"/><path class="o" d="M54 56V126L60 146L66 126V56"/><circle class="l" cx="60" cy="154" r="3.5"/>' },
+  { name: "pipette", unit: 2, category: "transfer", yes: ["glass","measure","transfer","thin","scale"],
+    description: "A thin glass tube that moves a small, exact volume of liquid to another container.",
+    drawing: '<path class="l" d="M58 86V140L60 152L62 140V86Z"/><path class="o" d="M58 6V42M62 6V42"/><ellipse class="o" cx="60" cy="64" rx="10" ry="22"/><path class="o" d="M58 86V140L60 152L62 140V86"/><path class="m" d="M52 24H68"/>' },
+  { name: "graduated cylinder", unit: 2, category: "measure", yes: ["glass","measure","store","scale","stand"],
+    description: "A tall, narrow container with a scale on the side. It measures the volume of a liquid.",
+    drawing: '<rect class="l" x="44" y="80" width="32" height="64"/><path class="o" d="M40 12L44 16V144H76V16L80 12"/><path class="m" d="M44 36h10M44 56h7M44 76h10M44 96h7M44 116h10M44 136h7"/><rect class="o" x="30" y="144" width="60" height="9" rx="2"/>' },
+  { name: "funnel", unit: 2, category: "transfer", yes: ["glass","transfer","cone"],
+    description: "A cone with a narrow tube. It helps you pour liquid into a narrow container without spilling.",
+    drawing: '<path class="l" d="M40 52H80L66 76H54Z"/><path class="o" d="M18 22H102L66 82V148H54V82Z"/>' },
+  { name: "volumetric flask", unit: 2, category: "measure", yes: ["glass","measure","store","neck","stand"],
+    description: "A flask with a round body, a long neck and one line. It makes a solution of an exact volume.",
+    drawing: '<path class="l" d="M54 44V82A32 32 0 1 0 66 82V44Z"/><path class="o" d="M54 8V82A32 32 0 1 0 66 82V8"/><path class="o" d="M50 8H70"/><path class="m" d="M48 44H72"/>' },
+  { name: "beaker", unit: 2, category: "contain", yes: ["glass","store","scale","stand"],
+    description: "A wide glass container with a flat bottom and a small spout. It holds, mixes and heats liquids.",
+    drawing: '<rect class="l" x="28" y="76" width="64" height="66"/><path class="o" d="M20 18L28 24V142H92V18"/><path class="m" d="M82 50h10M86 70h6M82 90h10M86 110h6"/>' },
+  { name: "Erlenmeyer flask", unit: 2, category: "contain", yes: ["glass","store","scale","neck","cone","stand"],
+    description: "A flask with a flat bottom, a cone-shaped body and a narrow neck, so you can swirl liquid without spilling.",
+    drawing: '<path class="l" d="M35.3 100L22 140H98L84.7 100Z"/><path class="o" d="M52 12V50L22 140H98L68 50V12"/><path class="o" d="M47 12H73"/>' },
+  { name: "wash bottle", unit: 2, category: "clean", yes: ["store","stand","soft","clean"],
+    description: "A soft plastic squeeze bottle with a bent nozzle. Water is the only substance allowed in it.",
+    drawing: '<path class="l" d="M34 92H86V136a10 10 0 0 1-10 10H44a10 10 0 0 1-10-10Z"/><rect class="o" x="34" y="56" width="52" height="90" rx="10"/><rect class="o" x="48" y="44" width="24" height="12" rx="2"/><path class="o" d="M60 44V22Q60 12 70 12L98 22"/>' },
+
+  { name: "burner", unit: 3, category: "heat", yes: ["heat","flame","stand"],
+    description: "A metal tube connected to gas. It makes a hot flame to heat substances.",
+    drawing: '<path class="f" d="M60 18C74 38 74 56 60 68C46 56 46 38 60 18Z"/><rect class="o" x="52" y="72" width="16" height="68"/><path class="o" d="M52 118H30"/><rect class="o" x="30" y="140" width="60" height="10" rx="2"/>' },
+  { name: "hot plate", unit: 3, category: "heat", yes: ["heat","electric","stand"],
+    description: "A flat electric surface. You put beakers and flasks on it to heat them.",
+    drawing: '<path class="m" d="M44 76q-6-8 0-16t0-16M60 76q-6-8 0-16t0-16M76 76q-6-8 0-16t0-16"/><rect class="f" x="24" y="88" width="72" height="12" rx="3"/><rect class="o" x="18" y="100" width="84" height="40" rx="4"/><circle class="o" cx="40" cy="120" r="7"/><circle class="o" cx="80" cy="120" r="7"/>' },
+  { name: "tongs", unit: 3, category: "grip", yes: ["grip","hot"],
+    description: "A metal tool with two long arms. You use it to pick up hot objects safely.",
+    drawing: '<path class="o" d="M40 16L80 136M80 16L40 136"/><circle class="s" cx="60" cy="76" r="5"/><path class="o" d="M80 136q-8 12-16 8M40 136q8 12 16 8"/><circle class="o" cx="40" cy="16" r="6"/><circle class="o" cx="80" cy="16" r="6"/>' },
+  { name: "stirring rod", unit: 3, category: "contain", yes: ["glass","thin","stir"],
+    description: "A thin glass stick. You use it to mix liquids.",
+    drawing: '<rect class="l" x="30" y="96" width="60" height="48" opacity=".45"/><path class="m" d="M30 70V144H90V70"/><path class="o" d="M44 136L86 12" style="stroke-width:5"/>' },
+  { name: "spatula", unit: 3, category: "transfer", yes: ["transfer","powder"],
+    description: "A small, flat metal tool. You use it to scoop and move solid powders.",
+    drawing: '<path class="o" d="M60 12V96"/><path class="o" d="M50 96H70V136a10 10 0 0 1-20 0Z"/><circle class="p" cx="60" cy="130" r="5"/>' },
+  { name: "mortar", unit: 3, category: "grind", yes: ["grind","powder","stand"],
+    description: "A heavy bowl. You crush solids into powder inside it.",
+    drawing: '<path class="p" d="M34 112H86Q84 132 60 132Q36 132 34 112Z"/><path class="o" d="M20 88H100Q100 138 60 138Q20 138 20 88Z"/><rect class="o" x="44" y="138" width="32" height="10" rx="2"/>' },
+  { name: "pestle", unit: 3, category: "grind", yes: ["grind","powder"],
+    description: "A heavy stick with a round end. You use it to crush and grind solids in a bowl.",
+    drawing: '<path class="o" d="M54 16H66L74 112a14 14 0 0 1-28 0Z"/>' },
+  { name: "forceps", unit: 3, category: "grip", yes: ["grip"],
+    description: "A small tool like tweezers. You use it to pick up tiny objects.",
+    drawing: '<path class="o" d="M58 14L46 144M62 14L74 144"/><path class="o" d="M54 14H66"/><path class="m" d="M52 60h6M62 60h6"/>' },
+  { name: "clamp", unit: 3, category: "grip", yes: ["grip","attach"],
+    description: "A metal tool fixed to a stand. It holds equipment firmly in place.",
+    drawing: '<path class="o" d="M30 10V146"/><rect class="o" x="14" y="146" width="62" height="8" rx="2"/><circle class="s" cx="30" cy="60" r="6"/><path class="o" d="M36 60H78"/><path class="o" d="M78 48Q98 48 98 60Q98 72 78 72"/><path class="o" d="M84 60H104"/>' },
+  { name: "tubing", unit: 3, category: "transfer", yes: ["transfer","thin","soft"],
+    description: "Soft, bendable pipes. They carry gas or liquid from one place to another.",
+    drawing: '<path class="o" d="M20 30C84 30 20 92 70 92S100 142 58 150" style="stroke-width:9"/><path class="l" d="M20 30C84 30 20 92 70 92S100 142 58 150" style="fill:none;stroke:var(--liquid);stroke-width:3"/>' }
+];
+
+// ---------- helpers ----------
+const shuffle = (list) => {
+  const copy = [...list];
+  for (let position = copy.length - 1; position > 0; position--) {
+    const swapWith = Math.floor(Math.random() * (position + 1));
+    [copy[position], copy[swapWith]] = [copy[swapWith], copy[position]];
+  }
+  return copy;
+};
+const escapeText = (text) => String(text).replace(/[&<>"]/g, (symbol) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[symbol]));
+const drawingSvg = (item) => `<svg class="fig" viewBox="0 0 120 160" aria-hidden="true">${item.drawing}</svg>`;
+const categoryChip = (categoryKey) => `<span class="chip cat cat-${categoryKey}">${CATEGORIES[categoryKey].title}</span>`;
+
+// ---------- shared state ----------
+const gameState = {
+  deck: "unit2",
+  activeTab: "detective",
+  activeTeam: 0,
+  teamScores: [0, 0]
+};
+const deckItems = () => EQUIPMENT.filter((item) =>
+  gameState.deck === "both" || (gameState.deck === "unit2" ? item.unit === 2 : item.unit === 3));
+const teamName = (teamIndex) => document.getElementById("teamName" + teamIndex).value.trim() || (teamIndex === 0 ? "Team A" : "Team B");
+
+function renderTeams() {
+  [0, 1].forEach((teamIndex) => {
+    document.getElementById("team" + teamIndex).classList.toggle("active", gameState.activeTeam === teamIndex);
+    document.getElementById("teamScore" + teamIndex).textContent = gameState.teamScores[teamIndex];
+  });
+}
+function addPoints(points) {
+  gameState.teamScores[gameState.activeTeam] += points;
+  renderTeams();
+}
+function switchTeam() {
+  gameState.activeTeam = 1 - gameState.activeTeam;
+  renderTeams();
+}
+document.getElementById("resetScores").addEventListener("click", () => {
+  gameState.teamScores = [0, 0];
+  gameState.activeTeam = 0;
+  renderTeams();
+});
+[0, 1].forEach((teamIndex) => document.getElementById("teamName" + teamIndex).addEventListener("input", () => {
+  if (gameState.activeTab === "sort") renderSort();
+  if (gameState.activeTab === "detective") renderDetective();
+}));
+
+// ---------- tabs and word set ----------
+function showTab(tabKey) {
+  gameState.activeTab = tabKey;
+  document.querySelectorAll(".tabs button").forEach((tabButton) =>
+    tabButton.setAttribute("aria-selected", String(tabButton.dataset.tab === tabKey)));
+  ["study", "sort", "detective"].forEach((panelKey) => {
+    document.getElementById("panel-" + panelKey).hidden = panelKey !== tabKey;
+  });
+  if (tabKey !== "sort") stopSortTimer();
+  if (tabKey === "study") renderStudy();
+  if (tabKey === "sort") renderSort();
+  if (tabKey === "detective") renderDetective();
+}
+document.querySelectorAll(".tabs button").forEach((tabButton) =>
+  tabButton.addEventListener("click", () => showTab(tabButton.dataset.tab)));
+
+document.querySelectorAll("#deckPicker button").forEach((deckButton) => deckButton.addEventListener("click", () => {
+  gameState.deck = deckButton.dataset.deck;
+  document.querySelectorAll("#deckPicker button").forEach((otherButton) =>
+    otherButton.setAttribute("aria-pressed", String(otherButton === deckButton)));
+  resetSort();
+  newMystery();
+  showTab(gameState.activeTab);
+}));
+
+// ---------- 1. Study ----------
+let studyNamesHidden = false;
+function renderStudy() {
+  const panel = document.getElementById("panel-study");
+  const studyCard = (item) => `
+    <article class="card">
+      ${drawingSvg(item)}
+      <div>
+        ${studyNamesHidden
+          ? `<button class="hidden-name" type="button" data-reveal="${escapeText(item.name)}">tap to show</button>`
+          : `<h3>${escapeText(item.name)}</h3>`}
+        <p>${escapeText(item.description)}</p>
+      </div>
+    </article>`;
+  // words are grouped by colour group, in the same order as the Colour Sort boxes
+  const cards = deckCategories().map((categoryKey) => {
+    const groupItems = deckItems().filter((item) => item.category === categoryKey);
+    return `
+      <section class="study-group cat cat-${categoryKey}">
+        <div class="study-group-head">
+          <h3>${CATEGORIES[categoryKey].title}</h3>
+          <span>${CATEGORIES[categoryKey].note} · ${groupItems.length} ${groupItems.length === 1 ? "word" : "words"}</span>
+        </div>
+        <div class="study-grid">${groupItems.map(studyCard).join("")}</div>
+      </section>`;
+  }).join("");
+  panel.innerHTML = `
+    <div class="panel-head">
+      <div><h2>Study the words</h2><p>Words are grouped by what they do. Learn one colour group at a time: the same colours come back in Colour Sort.</p></div>
+      <label class="toggle"><input type="checkbox" id="hideNames" ${studyNamesHidden ? "checked" : ""}> Hide the words (test yourself)</label>
+    </div>
+    <div class="study-groups">${cards}</div>`;
+  panel.querySelector("#hideNames").addEventListener("change", (event) => { studyNamesHidden = event.target.checked; renderStudy(); });
+  panel.querySelectorAll("[data-reveal]").forEach((revealButton) => revealButton.addEventListener("click", () => {
+    const heading = document.createElement("h3");
+    heading.textContent = revealButton.dataset.reveal;
+    revealButton.replaceWith(heading);
+  }));
+}
+
+// ---------- 2. Colour Sort ----------
+const ROUND_SECONDS = 60;
+const sortState = { phase: "ready", queue: [], current: null, secondsLeft: ROUND_SECONDS, correct: 0, missed: [], timerId: null, locked: false, feedback: "" };
+
+function resetSort() {
+  stopSortTimer();
+  Object.assign(sortState, { phase: "ready", queue: [], current: null, secondsLeft: ROUND_SECONDS, correct: 0, missed: [], locked: false, feedback: "" });
+}
+function stopSortTimer() {
+  if (sortState.timerId) clearInterval(sortState.timerId);
+  sortState.timerId = null;
+  if (sortState.phase === "playing") { sortState.phase = "ready"; }
+}
+function deckCategories() {
+  const usedKeys = new Set(deckItems().map((item) => item.category));
+  return Object.keys(CATEGORIES).filter((categoryKey) => usedKeys.has(categoryKey));
+}
+function nextSortCard() {
+  if (!sortState.queue.length) sortState.queue = shuffle(deckItems());
+  sortState.current = sortState.queue.shift();
+  sortState.locked = false;
+  sortState.feedback = "";
+}
+function startSortRound() {
+  Object.assign(sortState, { phase: "playing", queue: shuffle(deckItems()), secondsLeft: ROUND_SECONDS, correct: 0, missed: [] });
+  nextSortCard();
+  sortState.timerId = setInterval(() => {
+    sortState.secondsLeft--;
+    if (sortState.secondsLeft <= 0) {
+      clearInterval(sortState.timerId);
+      sortState.timerId = null;
+      sortState.phase = "done";
+      renderSort();
+      return;
+    }
+    updateSortTimer();
+  }, 1000);
+  renderSort();
+}
+function updateSortTimer() {
+  const timerBar = document.getElementById("sortTimer");
+  if (!timerBar) return;
+  timerBar.querySelector("i").style.width = (sortState.secondsLeft / ROUND_SECONDS * 100) + "%";
+  timerBar.classList.toggle("low", sortState.secondsLeft <= 10);
+  document.getElementById("sortSeconds").textContent = sortState.secondsLeft + " s";
+}
+function chooseBin(categoryKey) {
+  if (sortState.phase !== "playing" || sortState.locked) return;
+  sortState.locked = true;
+  const isCorrect = sortState.current.category === categoryKey;
+  if (isCorrect) { sortState.correct++; addPoints(1); sortState.feedback = "ok"; }
+  else { sortState.missed.push(sortState.current); sortState.feedback = "no"; }
+  renderSort();
+  setTimeout(() => {
+    if (sortState.phase !== "playing") return;
+    nextSortCard();
+    renderSort();
+  }, isCorrect ? 450 : 1300);
+}
+function renderSort() {
+  const panel = document.getElementById("panel-sort");
+  const categories = deckCategories();
+  const head = `
+    <div class="panel-head">
+      <div><h2>Colour Sort</h2><p>Put each word in its colour group. One point for each correct word. Each team has ${ROUND_SECONDS} seconds. Keys 1–${categories.length} also work.</p></div>
+    </div>`;
+
+  if (sortState.phase === "ready") {
+    panel.innerHTML = head + `
+      <div class="center-box">
+        <span class="label">Next to play</span>
+        <h3 style="font-size:36px">${escapeText(teamName(gameState.activeTeam))}</h3>
+        <div class="missed">${categories.map(categoryChip).join("")}</div>
+        <button class="btn primary big" id="sortStart" type="button">Start ${ROUND_SECONDS}-second round</button>
+      </div>`;
+    panel.querySelector("#sortStart").addEventListener("click", startSortRound);
+    return;
+  }
+
+  if (sortState.phase === "done") {
+    const uniqueMissed = [...new Map(sortState.missed.map((item) => [item.name, item])).values()];
+    panel.innerHTML = head + `
+      <div class="center-box">
+        <span class="label">Time is up · ${escapeText(teamName(gameState.activeTeam))}</span>
+        <div class="big-num">+${sortState.correct}</div>
+        ${uniqueMissed.length ? `<p class="muted">Words to review:</p><div class="missed">${uniqueMissed.map((item) =>
+          `<span class="chip cat cat-${item.category}">${escapeText(item.name)} → ${CATEGORIES[item.category].title}</span>`).join("")}</div>`
+          : `<p class="muted">No mistakes. Excellent!</p>`}
+        <button class="btn primary big" id="sortNext" type="button">Next team: ${escapeText(teamName(1 - gameState.activeTeam))}</button>
+      </div>`;
+    panel.querySelector("#sortNext").addEventListener("click", () => { switchTeam(); resetSort(); renderSort(); });
+    return;
+  }
+
+  const currentItem = sortState.current;
+  const feedbackText = sortState.feedback === "no"
+    ? `<p class="result-line no">No — it goes in ${CATEGORIES[currentItem.category].title}.</p>` : "";
+  panel.innerHTML = head + `
+    <div class="sort-stage">
+      <div>
+        <div class="sort-meta"><span>${escapeText(teamName(gameState.activeTeam))} · correct: ${sortState.correct}</span><span id="sortSeconds">${sortState.secondsLeft} s</span></div>
+        <div class="timer" id="sortTimer"><i style="width:${sortState.secondsLeft / ROUND_SECONDS * 100}%"></i></div>
+      </div>
+      <div class="sort-card ${sortState.feedback}">
+        ${drawingSvg(currentItem)}
+        <div><h3>${escapeText(currentItem.name)}</h3><p>${escapeText(currentItem.description)}</p>${feedbackText}</div>
+      </div>
+      <div class="bins">
+        ${categories.map((categoryKey, binIndex) => `
+          <button class="bin cat cat-${categoryKey} ${sortState.feedback === "no" && currentItem.category === categoryKey ? "hint" : ""}" type="button" data-bin="${categoryKey}" ${sortState.locked ? "disabled" : ""}>
+            <span class="key">${binIndex + 1}</span>
+            <b>${CATEGORIES[categoryKey].title}</b>
+            <small>${CATEGORIES[categoryKey].note}</small>
+          </button>`).join("")}
+      </div>
+    </div>`;
+  panel.querySelectorAll("[data-bin]").forEach((binButton) =>
+    binButton.addEventListener("click", () => chooseBin(binButton.dataset.bin)));
+  updateSortTimer();
+}
+document.addEventListener("keydown", (event) => {
+  if (gameState.activeTab !== "sort" || sortState.phase !== "playing") return;
+  if (event.target.tagName === "INPUT") return;
+  const categories = deckCategories();
+  const binNumber = Number(event.key);
+  if (binNumber >= 1 && binNumber <= categories.length) chooseBin(categories[binNumber - 1]);
+});
+
+// ---------- 3. Yes/No Detective ----------
+const STARTING_POT = 10;
+const detectiveState = { mystery: null, pot: STARTING_POT, askedKeys: [], wrongGuesses: [], status: "playing", showHelper: false };
+
+function newMystery() {
+  const candidates = deckItems().filter((item) => !detectiveState.mystery || item.name !== detectiveState.mystery.name);
+  Object.assign(detectiveState, {
+    mystery: shuffle(candidates)[0], pot: STARTING_POT, askedKeys: [], wrongGuesses: [], status: "playing"
+  });
+}
+function deckQuestions() {
+  // only questions that split the current word set are useful
+  const items = deckItems();
+  return QUESTIONS.filter((question) => {
+    const yesCount = items.filter((item) => item.yes.includes(question.key)).length;
+    return yesCount > 0 && yesCount < items.length;
+  });
+}
+function askQuestion(questionKey) {
+  if (detectiveState.status !== "playing" || detectiveState.askedKeys.includes(questionKey)) return;
+  detectiveState.askedKeys.push(questionKey);
+  detectiveState.pot = Math.max(1, detectiveState.pot - 1);
+  renderDetective();
+}
+function makeGuess(itemName) {
+  if (detectiveState.status !== "playing" || detectiveState.wrongGuesses.includes(itemName)) return;
+  if (itemName === detectiveState.mystery.name) {
+    detectiveState.status = "solved";
+    addPoints(detectiveState.pot);
+  } else {
+    detectiveState.wrongGuesses.push(itemName);
+    detectiveState.pot = Math.max(1, detectiveState.pot - 2);
+  }
+  renderDetective();
+}
+function stillPossible(item) {
+  return detectiveState.askedKeys.every((questionKey) =>
+    item.yes.includes(questionKey) === detectiveState.mystery.yes.includes(questionKey));
+}
+function renderDetective() {
+  const panel = document.getElementById("panel-detective");
+  if (!detectiveState.mystery) newMystery();
+  const mystery = detectiveState.mystery;
+  const isOver = detectiveState.status !== "playing";
+  const questionsByKey = Object.fromEntries(QUESTIONS.map((question) => [question.key, question]));
+
+  const potBar = Array.from({ length: STARTING_POT }, (_, pointIndex) =>
+    `<span class="${pointIndex < detectiveState.pot ? "" : "gone"}"></span>`).join("");
+
+  const logItems = detectiveState.askedKeys.map((questionKey) => {
+    const answerIsYes = mystery.yes.includes(questionKey);
+    return `<li><span>${escapeText(questionsByKey[questionKey].text)}</span><span class="ans ${answerIsYes ? "yes" : "no"}">${answerIsYes ? "YES" : "NO"}</span></li>`;
+  }).join("");
+
+  let mysteryBox;
+  if (detectiveState.status === "playing") {
+    mysteryBox = `
+      <div class="mystery">
+        <span class="label">${escapeText(teamName(gameState.activeTeam))} is the detective</span>
+        <div class="qmark">?</div>
+        <div class="pot"><span class="label">Points in play</span><b>${detectiveState.pot}</b></div>
+        <div class="pot-bar">${potBar}</div>
+        <p class="muted" style="margin:0;font-size:14px">Each question costs 1 point. A wrong guess costs 2.</p>
+      </div>`;
+  } else {
+    const solved = detectiveState.status === "solved";
+    mysteryBox = `
+      <div class="mystery ${solved ? "solved" : "gaveup"}">
+        <p class="result-line ${solved ? "ok" : "no"}" style="margin:0">${solved
+          ? `Solved! ${escapeText(teamName(gameState.activeTeam))} gets +${detectiveState.pot}`
+          : "No points this time."}</p>
+        <div class="fig">${drawingSvg(mystery)}</div>
+        <h3 style="font-size:28px">${escapeText(mystery.name)}</h3>
+        <div>${categoryChip(mystery.category)}</div>
+        <p style="margin:0">${escapeText(mystery.description)}</p>
+        <button class="btn primary" id="nextMystery" type="button">Next mystery · ${escapeText(teamName(1 - gameState.activeTeam))}</button>
+      </div>`;
+  }
+
+  const questionButtons = deckQuestions().map((question) => {
+    const wasAsked = detectiveState.askedKeys.includes(question.key);
+    const answerIsYes = mystery.yes.includes(question.key);
+    const stateClass = wasAsked ? (answerIsYes ? "asked-yes" : "asked-no") : "";
+    return `<button class="qbtn ${stateClass}" type="button" data-question="${question.key}" ${wasAsked || isOver ? "disabled" : ""}>
+      <span>${escapeText(question.text)}</span>${wasAsked ? `<span class="ans ${answerIsYes ? "yes" : "no"}">${answerIsYes ? "YES" : "NO"}</span>` : ""}
+    </button>`;
+  }).join("");
+
+  const guessButtons = deckItems().map((item) => {
+    const isWrong = detectiveState.wrongGuesses.includes(item.name);
+    const isRight = isOver && item.name === mystery.name;
+    const isFaded = detectiveState.showHelper && !isOver && !isWrong && !stillPossible(item);
+    return `<button class="gbtn ${isWrong ? "wrong" : ""} ${isRight ? "right" : ""} ${isFaded ? "faded" : ""}" type="button" data-guess="${escapeText(item.name)}" ${isOver || isWrong ? "disabled" : ""}>
+      ${drawingSvg(item)}<span>${escapeText(item.name)}</span></button>`;
+  }).join("");
+
+  panel.innerHTML = `
+    <div class="panel-head">
+      <div><h2>Yes/No Detective</h2><p>The computer is thinking of one lab item. Ask yes/no questions, then guess the word. The fewer questions you ask, the more points you win.</p></div>
+    </div>
+    <div class="det">
+      <div style="display:grid;gap:14px">
+        ${mysteryBox}
+        ${logItems ? `<div><span class="label">Clues so far</span><ul class="log" style="margin-top:8px">${logItems}</ul></div>` : ""}
+      </div>
+      <div>
+        <div class="section-title" style="margin-top:0"><h3>Ask a question</h3><span class="label">${detectiveState.askedKeys.length} asked</span></div>
+        <div class="questions">${questionButtons}</div>
+        <div class="section-title">
+          <h3>Make a guess</h3>
+          <label class="toggle"><input type="checkbox" id="helperToggle" ${detectiveState.showHelper ? "checked" : ""}> Fade words that don't match the clues</label>
+        </div>
+        <div class="guesses">${guessButtons}</div>
+        ${isOver ? "" : `<div style="margin-top:14px"><button class="btn" id="giveUp" type="button">Give up and show the answer</button></div>`}
+      </div>
+    </div>`;
+
+  panel.querySelectorAll("[data-question]").forEach((questionButton) =>
+    questionButton.addEventListener("click", () => askQuestion(questionButton.dataset.question)));
+  panel.querySelectorAll("[data-guess]").forEach((guessButton) =>
+    guessButton.addEventListener("click", () => makeGuess(guessButton.dataset.guess)));
+  panel.querySelector("#helperToggle").addEventListener("change", (event) => { detectiveState.showHelper = event.target.checked; renderDetective(); });
+  const giveUpButton = panel.querySelector("#giveUp");
+  if (giveUpButton) giveUpButton.addEventListener("click", () => { detectiveState.status = "gaveup"; renderDetective(); });
+  const nextButton = panel.querySelector("#nextMystery");
+  if (nextButton) nextButton.addEventListener("click", () => { switchTeam(); newMystery(); renderDetective(); });
+}
+
+// ---------- start ----------
+renderTeams();
+newMystery();
+showTab("detective");
+</script>
+</body>
+</html>
